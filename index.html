@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>房贷与利率计算器</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient--left" aria-hidden="true"></div>
+    <div class="ambient ambient--right" aria-hidden="true"></div>
+
+    <main class="app-shell">
+      <section class="hero">
+        <div class="hero__copy">
+          <p class="eyebrow">Loan Rate Lab</p>
+          <h1>房贷与贷款利率计算器</h1>
+          <p class="hero__lede">
+            支持普通贷款、商业房贷、组合贷，覆盖等额本息与等额本金，自动生成年度汇总与按年展开的月度还款明细。
+          </p>
+          <div class="hero__tags">
+            <span>年度平均月供</span>
+            <span>本金 / 利息拆分</span>
+            <span>组合贷明细合并</span>
+            <span>一键切换还款方式</span>
+          </div>
+        </div>
+
+        <aside class="hero__aside">
+          <h2>这版额外补充了什么</h2>
+          <ul class="feature-list">
+            <li>提供试算模板，减少重复录入</li>
+            <li>自动对比另一种还款方式的成本差异</li>
+            <li>组合贷支持商贷与公积金分别计息、统一汇总</li>
+            <li>年度卡片可展开查看该年每个月的本金、利息与剩余本金</li>
+          </ul>
+          <p class="hero__note">
+            说明：计算结果用于试算展示，实际扣款可能因银行计息、四舍五入和利率调整略有差异。
+          </p>
+        </aside>
+      </section>
+
+      <section class="workspace">
+        <form id="calculator-form" class="panel form-panel" novalidate>
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">输入条件</p>
+              <h2>贷款参数</h2>
+            </div>
+            <button type="button" id="reset-button" class="ghost-button">恢复默认</button>
+          </div>
+
+          <div class="section-block">
+            <label class="field-label">贷款类型</label>
+            <div class="segmented" id="loan-type-switch" role="tablist" aria-label="贷款类型切换">
+              <button type="button" class="segmented__item is-active" data-loan-type="commercial">商业房贷</button>
+              <button type="button" class="segmented__item" data-loan-type="combo">组合贷</button>
+              <button type="button" class="segmented__item" data-loan-type="general">普通贷款</button>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <div class="section-block__head">
+              <label class="field-label">试算模板</label>
+              <p>点击后会自动填充参数，你仍然可以继续修改。</p>
+            </div>
+            <div class="scenario-grid" id="scenario-grid">
+              <button type="button" class="scenario-chip" data-scenario="first-home">
+                商贷 120 万 / 30 年
+              </button>
+              <button type="button" class="scenario-chip" data-scenario="combo-home">
+                组合贷 180 万 / 30 年
+              </button>
+              <button type="button" class="scenario-chip" data-scenario="general-short">
+                普通贷 20 万 / 36 期
+              </button>
+            </div>
+          </div>
+
+          <div class="section-block">
+            <label class="field-label">还款方式</label>
+            <div class="segmented" id="repayment-switch" role="tablist" aria-label="还款方式切换">
+              <button type="button" class="segmented__item is-active" data-method="equal-installment">等额本息</button>
+              <button type="button" class="segmented__item" data-method="equal-principal">等额本金</button>
+            </div>
+          </div>
+
+          <input type="hidden" id="loan-type-input" name="loanType" value="commercial" />
+          <input type="hidden" id="method-input" name="repaymentMethod" value="equal-installment" />
+
+          <div id="single-loan-fields" class="field-grid">
+            <label class="field">
+              <span id="single-amount-label">商业贷款金额（万元）</span>
+              <input id="single-amount" name="singleAmount" type="number" min="0" step="0.01" value="120" />
+            </label>
+
+            <label class="field">
+              <span id="single-rate-label">商业贷款年利率（%）</span>
+              <input id="single-rate" name="singleRate" type="number" min="0" step="0.01" value="3.65" />
+            </label>
+          </div>
+
+          <div id="combo-loan-fields" class="field-grid is-hidden">
+            <label class="field">
+              <span>商业贷款金额（万元）</span>
+              <input id="combo-commercial-amount" name="comboCommercialAmount" type="number" min="0" step="0.01" value="110" />
+            </label>
+
+            <label class="field">
+              <span>商业贷款年利率（%）</span>
+              <input id="combo-commercial-rate" name="comboCommercialRate" type="number" min="0" step="0.01" value="3.65" />
+            </label>
+
+            <label class="field">
+              <span>公积金贷款金额（万元）</span>
+              <input id="combo-fund-amount" name="comboFundAmount" type="number" min="0" step="0.01" value="70" />
+            </label>
+
+            <label class="field">
+              <span>公积金贷款年利率（%）</span>
+              <input id="combo-fund-rate" name="comboFundRate" type="number" min="0" step="0.01" value="2.85" />
+            </label>
+          </div>
+
+          <div class="field-grid field-grid--compact">
+            <label class="field">
+              <span>贷款期限</span>
+              <input id="term-value" name="termValue" type="number" min="1" step="1" value="30" />
+            </label>
+
+            <label class="field">
+              <span>期限单位</span>
+              <select id="term-unit" name="termUnit">
+                <option value="years" selected>年</option>
+                <option value="months">月</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="form-error" class="form-error" role="alert" aria-live="polite"></div>
+
+          <div class="form-actions">
+            <button type="submit" class="primary-button">开始计算</button>
+            <p class="form-actions__hint">金额按万元输入，结果按人民币元展示。</p>
+          </div>
+        </form>
+
+        <section class="panel results-panel">
+          <div class="panel__header">
+            <div>
+              <p class="panel__eyebrow">结果输出</p>
+              <h2>还款全景</h2>
+            </div>
+            <div class="panel__meta" id="result-meta"></div>
+          </div>
+
+          <div id="results-root">
+            <div class="summary-grid" id="summary-grid"></div>
+
+            <section class="comparison-card" id="comparison-card"></section>
+
+            <section class="section-block">
+              <div class="section-block__head">
+                <div>
+                  <label class="field-label">年度还款概览</label>
+                  <p>点击任意年份，查看这一年的逐月明细。</p>
+                </div>
+              </div>
+              <div id="yearly-breakdown" class="yearly-breakdown"></div>
+            </section>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
